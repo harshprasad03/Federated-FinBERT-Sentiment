@@ -60,6 +60,7 @@ https://huggingface.co/harshprasad03/FinBERT-FedProx
 https://huggingface.co/harshprasad03/FinBERT-AdaptiveFedAvg  
 
 Each model card contains:
+
 • description  
 • training setup  
 • usage example  

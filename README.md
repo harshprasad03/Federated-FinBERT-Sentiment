@@ -1,24 +1,76 @@
 # Federated Learning for Financial Sentiment Analysis using FinBERT
 
-This project applies **Federated Learning** to financial sentiment analysis using **FinBERT**.  
+This project applies **Federated Learning (FL)** to **financial sentiment analysis**
+using the pretrained language model **FinBERT**.  
+The goal is to evaluate how different FL optimization strategies perform when training
+across multiple private financial text sources without sharing raw data.
+
 We compare three algorithms:
 
-✔ FedAvg  
-✔ FedProx  
-✔ Adaptive Aggregation (Adaptive FedAvg)  
+✔ **FedAvg** (baseline)  
+✔ **FedProx** (proximal stability term)  
+✔ **Adaptive Aggregation** (performance-weighted averaging)  
 
-Our dataset contains financial text from **Twitter, News, and Financial Reports**, split across clients to simulate privacy-preserving training.
+Training data is split across **three simulated clients**:
+
+• Financial Twitter posts  
+• Financial News headlines  
+• Financial Reports / Statements  
+
+to mimic privacy-preserving, real-world deployment.
 
 ---
 
-## 🧠 Objective
-To study how different federated optimization algorithms perform on financial sentiment tasks, and whether FedProx or Adaptive aggregation improve stability and accuracy over FedAvg.
+## 🎯 Objective
+
+To study whether **FedProx or Adaptive Aggregation** improve stability,
+neutral-class handling, and overall sentiment accuracy  
+compared to standard **FedAvg**, when training on **non-IID financial datasets**.
+
+---
+
+## 🚀 Try the Models — Google Colab Demo
+
+You can test the trained models directly in Colab  
+without downloading anything:
+
+👉 **Federated FinBERT Demo Notebook**  
+(loads FedAvg / FedProx / Adaptive and runs predictions)
+
+> `Federated_FinBERT_Demo.ipynb`
+
+Features:
+✔ model-selection menu  
+✔ simple `predict_sentiment("text")` function  
+✔ prints sentiment + class probabilities  
+
+---
+
+## 🤗 HuggingFace Model Links
+
+The trained models are publicly hosted:
+
+🔹 **FedAvg**  
+https://huggingface.co/harshprasad03/FinBERT-FedAvg  
+
+🔹 **FedProx**  
+https://huggingface.co/harshprasad03/FinBERT-FedProx  
+
+🔹 **Adaptive Aggregation**  
+https://huggingface.co/harshprasad03/FinBERT-AdaptiveFedAvg  
+
+Each model card contains:
+• description  
+• training setup  
+• usage example  
+• authorship credit  
 
 ---
 
 ## 📂 Repository Structure
 
 ```
+
 Project/
 ├── 01_data_normalisation.ipynb
 ├── 02_federated_setup.ipynb
@@ -30,38 +82,126 @@ Project/
 ├── 08_federated_fedprox_multiround.ipynb
 ├── 09_federated_adaptive_aggregation.ipynb
 ├── 10_federated_results_comparison.ipynb
-├── data.zip   ← dataset raw,clean,processed,val_splits
-├── results.zip ← output metrics & plots
+├── Federated_FinBERT_Demo.ipynb
+├── data.zip
+├── results.zip
 
 ```
 
 ---
 
-## 📊 Key Findings
+## 📊 Key Experimental Findings
 
-| Method | Final Avg F1 |
-|-------|--------------|
+| Method | Final Avg F1-Score |
+|-------|--------------------|
 | **FedAvg (10 rounds)** | ~0.846 |
-| **FedProx (μ = 0.05)** | ~0.855 |
-| **Adaptive FedAvg**   | ~0.823 |
+| **FedProx (μ = 0.05)** | **~0.855** |
+| **Adaptive FedAvg** | ~0.823 |
 
-FedProx showed **slightly higher and more stable performance**, especially where client data distributions differed.
+### 🧠 Interpretation
+✔ **FedProx produced the most stable and balanced performance**,  
+particularly for Neutral sentiment classification
 
----
+✔ **FedAvg showed mild optimistic bias**  
+(tending to classify factual statements as Positive)
 
-## 🏗 Model Weights
-Model folders were too large for GitHub.  
-They can be shared via cloud storage if needed.
+✔ **Adaptive Aggregation converged smoothly but did not outperform FedProx or basic FedAvg**
 
----
-
-## 🚀 Tech Stack
-- Python / PyTorch
-- HuggingFace Transformers
-- Sklearn
-- Federated Learning concepts
+These results support the idea that **FedProx reduces client drift**
+in non-IID federated financial text settings.
 
 ---
 
-## 📌 Notes
-This is a student research project intended for learning & academic exploration.
+## 🏗 Model Architecture
+
+Base model:
+```
+
+ProsusAI/finbert
+
+```
+
+Task:
+```
+
+3-class sentiment
+(Positive / Neutral / Negative)
+
+```
+
+Federated setup:
+```
+
+3 clients
+10 global rounds
+3 local epochs
+
+```
+
+---
+
+## 🧪 Datasets
+
+Three private client datasets:
+
+• Financial Twitter posts  
+• Financial News  
+• Financial Reports  
+
+Raw/processed/split data stored in:
+
+```
+
+data.zip
+
+```
+
+Validation splits used for global evaluation(present in data folder under splits).
+
+---
+
+## 🛠 Tech Stack
+
+• Python  
+• PyTorch  
+• HuggingFace Transformers  
+• Sklearn  
+• Jupyter / Google Colab  
+
+---
+
+## 📌 Project Status
+
+This work forms part of a **Master’s-Level Research Project**
+on **Federated NLP Applications in Finance**.
+
+The project demonstrates:
+
+✔ privacy-preserving training  
+✔ domain-specific language modeling  
+✔ algorithm comparison  
+✔ reproducible experiments  
+
+---
+
+## 👥 Authors
+
+**Harsh Prasad**  
+**Sai Dhole**  
+
+---
+
+## 📜 License
+
+This repository is released under the **MIT License**.
+
+---
+
+## 🙏 Acknowledgements
+
+This project is built on:
+
+`ProsusAI/finbert`  
+and the HuggingFace ecosystem.
+
+---

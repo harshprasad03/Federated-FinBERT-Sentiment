@@ -1,0 +1,4 @@
+Method,Final Avg F1
+FedAvg (10 rounds),0.846311868799226
+FedProx (μ=0.05),0.8550722628487376
+Adaptive FedAvg,0.82329414102007

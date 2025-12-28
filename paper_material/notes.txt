@@ -1,0 +1,346 @@
+Project: Federated Learning for Financial Sentiment Analysis using FinBERT
+Authors: Harsh Prasad & Sai Dhole
+Year: 2025
+
+====================================================
+1. Problem Motivation
+====================================================
+
+Financial text contains highly sensitive information (e.g., trading opinions,
+earnings documents, internal reports). Centralizing such data for training
+poses privacy, governance, and compliance risks.
+
+Federated Learning (FL) allows a shared model to be trained without moving
+raw data. Instead, only model updates are shared and aggregated.
+
+This project explores FL applied to financial sentiment classification using
+FinBERT, and compares three aggregation strategies:
+
+1) FedAvg
+2) FedProx
+3) Adaptive Aggregation
+
+Goal:
+Evaluate whether FedProx and Adaptive improve stability, neutrality handling,
+and overall performance compared to baseline FedAvg under non-IID data.
+
+
+
+====================================================
+2. Dataset & Client Simulation
+====================================================
+
+We simulate three independent financial text clients:
+
+Client 1 — Financial Twitter
+Client 2 — Financial News
+Client 3 — Financial Reports
+
+Each client contains text labeled:
+0 = Negative
+1 = Neutral
+2 = Positive
+
+Note - Financial Twitter only includes two labels positive and negative to increase data heterogenity
+
+This setup intentionally creates non-IID data:
+- Twitter is noisy and opinion-based
+- News is formal and optimistic-leaning
+- Reports are factual and often neutral
+
+Non-IID data is realistic and important in FL research.
+
+
+
+====================================================
+3. Notebook Overview & What Each One Does
+====================================================
+
+
+-----------------------------
+Notebook 01 — Data Normalisation
+-----------------------------
+
+Objective:
+Clean and standardize all three datasets before training.
+
+Key Processing:
+- removed URLs, emojis, special characters
+- converted text to lowercase
+- trimmed whitespace
+- basic sanity checks
+- removed empty entries
+
+Why "light" cleaning?
+Because:
+FinBERT is pretrained on finance text.
+Too much text alteration can damage meaning.
+
+Outcome:
+Three clean datasets ready for splitting.
+
+
+
+-----------------------------
+Notebook 02 — Federated Setup & Data Splitting
+-----------------------------
+
+We split each client dataset into:
+
+Training — 70%
+Validation — 15%
+Test — 15%
+
+Why split?
+Training = used locally at clients
+Validation = used for global performance monitoring
+Test = used at final evaluation only
+
+Why not use random new splits later?
+Because results must be reproducible.
+
+
+
+-----------------------------
+Notebooks 03, 04, 05 — Local FinBERT Training
+(Twitter, News, Reports)
+-----------------------------
+
+Each client fine-tunes FinBERT locally.
+
+Hyperparameters:
+Epochs = 3
+Batch size = standard defaults
+Optimizer = AdamW
+Loss = Cross-Entropy
+
+Why 3 epochs?
+- avoids overfitting
+- reduces compute cost
+- accepted standard baseline in NLP fine-tuning
+- stable across datasets
+
+Local model checkpoints saved.
+
+
+
+====================================================
+4. Federated Training — Stage 1 (FedAvg)
+====================================================
+
+Notebook 06 — Single-Round FedAvg Aggregation
+
+Process:
+1. Start with FinBERT base model
+2. Send to each client
+3. Clients train locally
+4. Model weights aggregated by averaging
+
+This is the classic baseline algorithm.
+
+Then we evaluated the global model.
+
+Insights:
+FedAvg works well
+BUT
+showed mild optimistic bias
+(classifying factual statements as Positive).
+
+
+Notebook 07 — Multi-Round FedAvg
+
+We extended FedAvg to 5 and then 10 global rounds.
+
+Round settings:
+Global rounds = 10
+Local epochs = 3
+
+Why 10 rounds?
+Most FL research papers benchmark between 5-20 rounds.
+10 gives:
+• stable convergence
+• reasonable compute cost
+
+Results:
+
+FedAvg Final Avg F1 ≈ 0.846
+
+Trend:
+Performance improves rapidly in first rounds then stabilizes.
+
+
+
+====================================================
+5. Federated Training — Stage 2 (FedProx)
+====================================================
+
+Notebook 08 — FedProx Multi-Round
+
+FedProx modifies the client loss function:
+
+Loss = Task Loss + μ * Proximal Penalty
+
+This prevents local models drifting too far from the global model.
+
+Why is this needed?
+Because our 3 clients are highly non-IID.
+
+μ value tested = 0.05
+(based on research literature + tuning experiments where we tested with three μ values)
+
+FedProx Results:
+
+Final Avg F1 ≈ 0.855
+
+Key Observation:
+FedProx improved Neutral class handling.
+Predictions were more balanced.
+Model showed less optimistic bias.
+
+Conclusion:
+FedProx reduces instability caused by data heterogeneity.
+
+
+
+====================================================
+6. Federated Training — Stage 3 (Adaptive Aggregation)
+====================================================
+
+Notebook 09 — Adaptive Aggregation
+
+Idea:
+Clients with better validation accuracy should contribute more weight.
+
+Aggregation weighting = validation-based
+
+Result:
+Final Avg F1 ≈ 0.823
+
+Interpretation:
+Although convergence was smooth,
+Adaptive did not outperform FedProx.
+
+Likely reason:
+One or two clients dominated weight allocation,
+causing imbalance.
+
+
+
+====================================================
+7. Global Model Evaluation & Comparison
+====================================================
+
+Notebook 10 — Results Comparison
+
+Final Results Table:
+
+FedAvg      ≈ 0.846
+FedProx     ≈ 0.855   (Best)
+Adaptive    ≈ 0.823
+
+Key Finding:
+FedProx provides slightly better overall performance
+and improved Neutral robustness
+under non-IID financial data.
+
+
+
+====================================================
+8. Behavioural Observation — Neutral Class
+====================================================
+
+Example statement:
+
+“Tesla will hold its quarterly earnings call next Thursday at 5 PM ET.”
+
+Human label = Neutral
+
+Model outputs:
+
+FedAvg      — Positive
+Adaptive    — Positive
+FedProx     — Neutral
+
+Interpretation:
+FedAvg & Adaptive inherit optimism bias from client datasets.
+
+FedProx
+prevents extreme client drift
+→ more balanced sentiment boundaries.
+
+This is an important research contribution.
+
+
+
+====================================================
+9. Final Model Deployment
+====================================================
+
+Three global models uploaded to HuggingFace:
+
+FinBERT-FedAvg
+FinBERT-FedProx
+FinBERT-AdaptiveFedAvg
+
+Plus a Colab Demo Notebook with model selection menu
+and simple inference function.
+
+
+
+====================================================
+10. Key Decisions Summary
+====================================================
+
+FinBERT chosen:
+Finance-domain pretrained model = best baseline
+
+3 Epochs:
+Stable fine-tuning without overfitting
+
+10 Global Rounds:
+Common FL benchmark standard
+
+FedProx μ = 0.05:
+Balanced stability vs flexibility
+
+Three Clients:
+Reflect realistic financial data sources
+
+Federated Learning:
+Preserves privacy & decentralisation
+
+
+
+====================================================
+11. Main Research Conclusion
+====================================================
+
+FedProx improves:
+✔ model stability
+✔ neutrality handling
+✔ robustness to non-IID data
+
+FedAvg works well but is optimistic-leaning.
+
+Adaptive aggregation did not outperform FedProx
+in this setup.
+
+
+
+====================================================
+12. Next Research Directions
+====================================================
+
+Potential future work:
+-advance Adaptive Aggregation Techniques
+- more clients
+- real-world on-device deployment
+- class-imbalance correction
+- explainability
+- larger datasets
+
+
+
+====================================================
+End of Notes
+====================================================

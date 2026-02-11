@@ -96,7 +96,7 @@ Project/
 
 | Method | Final Avg F1-Score |
 |-------|--------------------|
-| **FedAvg (10 rounds)** | ~0.846 |
+| **FedAvg (10 rounds)** | ~0.835 |
 | **FedProx (μ = 0.05)** | **~0.855** |
 | **Adaptive FedAvg** | ~0.823 |
 
